@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/facebook"
@@ -64,14 +65,14 @@ func Auth() http.Handler {
 		}
 
 		client := conf.Client(oauth2.NoContext, tok)
-		email, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
+		res, err := client.Get("https://graph.facebook.com/me?fields=email,name,picture.type(large)&access_token=" + url.QueryEscape(tok.AccessToken))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprintf(w, "Error: %s -- %v", w.Header(), err)
 			return
 		}
-		defer email.Body.Close()
-		data, _ := ioutil.ReadAll(email.Body)
+		defer res.Body.Close()
+		data, _ := ioutil.ReadAll(res.Body)
 		w.WriteHeader(http.StatusOK)
 		w.Write(data)
 	})
